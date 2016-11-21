@@ -323,6 +323,9 @@ function initCube() {
         -1.0,  1.0,  1.0,
         -1.0,  1.0, -1.0
     ];
+    for (var i = 0; i < vertices.length; i++) {
+        vertices[i] *= 1.0;
+    }
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     cubeVertexPositionBuffer.itemSize = 3;
     cubeVertexPositionBuffer.numItems = 24;
@@ -419,7 +422,7 @@ function drawScene() {
 
     mat4.identity(mvMatrix);
 
-    mat4.translate(mvMatrix, [0, 0.0, -10.0]);
+    mat4.translate(mvMatrix, [0, 0.0, -7.5]);
 
     mat4.rotate(mvMatrix, degToRad(xRot), [1, 0, 0]);
     mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
