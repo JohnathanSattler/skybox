@@ -1,25 +1,30 @@
 var gl;
+
 function initGL(canvas) {
+
     try {
         gl = canvas.getContext("experimental-webgl");
         gl.viewportWidth = canvas.width;
         gl.viewportHeight = canvas.height;
     } catch (e) {
     }
+
     if (!gl) {
         alert("Could not initialise WebGL, sorry :-(");
     }
 }
 
-
 function getShader(gl, id) {
+
     var shaderScript = document.getElementById(id);
+
     if (!shaderScript) {
         return null;
     }
 
     var str = "";
     var k = shaderScript.firstChild;
+
     while (k) {
         if (k.nodeType == 3) {
             str += k.textContent;
@@ -28,6 +33,7 @@ function getShader(gl, id) {
     }
 
     var shader;
+
     if (shaderScript.type == "x-shader/x-fragment") {
         shader = gl.createShader(gl.FRAGMENT_SHADER);
     } else if (shaderScript.type == "x-shader/x-vertex") {
@@ -47,10 +53,10 @@ function getShader(gl, id) {
     return shader;
 }
 
-
 var shaderProgram;
 
 function initShaders() {
+
     var fragmentShader = getShader(gl, "shader-fs");
     var vertexShader = getShader(gl, "shader-vs");
 
@@ -76,16 +82,17 @@ function initShaders() {
     shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
 }
 
-
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
 
 function setMatrixUniforms() {
+
     gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
 }
 
 function degToRad(degrees) {
+
     return degrees * Math.PI  / 180;
 }
 
@@ -94,7 +101,18 @@ var skyboxVertexTextureCoordBuffer
 var skyboxVertexNormalBuffer;
 var skyboxVertexIndexBuffer;
 
+var cubeVertexPositionBuffer;
+var cubeVertexTextureCoordBuffer
+var cubeVertexNormalBuffer;
+var cubeVertexIndexBuffer;
+
 function initBuffers() {
+
+    initSkybox();
+    initCube();
+}
+
+function initSkybox() {
 
     skyboxVertexPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, skyboxVertexPositionBuffer);
@@ -144,80 +162,6 @@ function initBuffers() {
 
     skyboxVertexTextureCoordBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, skyboxVertexTextureCoordBuffer);
-    /*var textureCoords = [
-        // Front face
-        0.0, 0.0,
-        1.0, 0.0,
-        1.0, 1.0,
-        0.0, 1.0,
-
-        // Back face
-        1.0, 0.0, 
-        1.0, 1.0,
-        0.0, 1.0, 
-        0.0, 0.0,
-
-        // Top face
-        0.0, 1.0, 
-        0.0, 0.0, 
-        1.0, 0.0, 
-        1.0, 1.0, 
-
-        // Bottom face
-        1.0, 1.0, 
-        0.0, 1.0, 
-        0.0, 0.0, 
-        1.0, 0.0, 
-
-        // Right face
-        1.0, 0.0, 
-        1.0, 1.0, 
-        0.0, 1.0, 
-        0.0, 0.0, 
-
-        // Left face
-        0.0, 0.0, 
-        1.0, 0.0, 
-        1.0, 1.0, 
-        0.0, 1.0
-    ];*/
-    /*var textureCoords = [
-        // Front face
-        1.0, 0.0,
-        0.75, 0.0,
-        0.75, 0.5,
-        1.0, 0.5,
-
-        // Back face
-        0.25, 0.0, 
-        0.25, 0.5,
-        0.5, 0.5, 
-        0.5, 0.0,
-
-        // Top face
-        0.25, 0.5, 
-        0.25, 1.0, 
-        0.5, 1.0, 
-        0.5, 0.5, 
-
-        // Bottom face
-        0.0, 0.5, 
-        0.25, 0.5, 
-        0.25, 1.0, 
-        0.0, 1.0, 
-
-        // Right face
-        0.5, 0.0, 
-        0.5, 0.5, 
-        0.75, 0.5, 
-        0.75, 0.0, 
-
-        // Left face
-        0.25, 0.0, 
-        0.0, 0.0, 
-        0.0, 0.5, 
-        0.25, 0.5
-    ];*/
     var textureCoords = [
         // Front face
         1.0,  0.34,
@@ -276,13 +220,7 @@ function initBuffers() {
     initCube();
 }
 
-var cubeVertexPositionBuffer;
-var cubeVertexTextureCoordBuffer
-var cubeVertexNormalBuffer;
-var cubeVertexIndexBuffer;
-
 function initCube() {
-
 
     cubeVertexPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
@@ -389,21 +327,26 @@ function initCube() {
 }
 
 function handleLoadedTexture(texture) {
+
     gl.bindTexture(gl.TEXTURE_2D, texture);
+
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
-    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
     gl.bindTexture(gl.TEXTURE_2D, null);
 }
 
 var textureImage;
+
 function initTextures() {
+
     textureImage = gl.createTexture();
     textureImage.image = new Image();
+
     textureImage.image.onload = function() {
         handleLoadedTexture(textureImage)
     }
@@ -414,7 +357,9 @@ function initTextures() {
 var xRot = 10;
 var yRot = 0;
 var zRot = 0;
+
 function drawScene() {
+
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -423,6 +368,15 @@ function drawScene() {
     mat4.identity(mvMatrix);
 
     mat4.translate(mvMatrix, [0, 0.0, -7.5]);
+
+    // render skybox
+    drawSkyBox();
+
+    // render cube
+    drawSmallCube();
+}
+
+function drawSkyBox() {
 
     mat4.rotate(mvMatrix, degToRad(xRot), [1, 0, 0]);
     mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
@@ -441,8 +395,10 @@ function drawScene() {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, skyboxVertexIndexBuffer);
     setMatrixUniforms();
     gl.drawElements(gl.TRIANGLES, skyboxVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+}
 
-    // render smaller cube
+function drawSmallCube() {
+
     gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
@@ -458,11 +414,12 @@ function drawScene() {
     gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
 
-
 var lastTime = 0;
 
 function animate() {
+
     var timeNow = new Date().getTime();
+
     if (lastTime != 0) {
         var elapsed = timeNow - lastTime;
 
@@ -470,16 +427,19 @@ function animate() {
         yRot += (90 * elapsed) / 1000.0 / 5;
         //zRot += (90 * elapsed) / 1000.0;
     }
+
     lastTime = timeNow;
 }
 
 function tick() {
+
     requestAnimFrame(tick);
     drawScene();
     animate();
 }
 
 function webGLStart() {
+
     var canvas = document.getElementById("myCanvas");
 
     canvas.width = window.innerWidth;
