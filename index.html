@@ -43,8 +43,9 @@
 		varying vec3 vPosition;
 
 		void main(void) {
-			vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+			vec4 position = uMVMatrix * vec4(aVertexPosition, 1.0);
 			gl_Position = uPMatrix * vPosition;
+			vPosition = position.xyz;
 			vTextureCoord = aTextureCoord;
 			vNormal = normalize(uNMatrix * aVertexNormal);
 		}
@@ -63,7 +64,8 @@
 			vec3 N = vNormal;
 			vec3 V = -vPosition;
 			vec3 R = -reflect(V, N);
-			gl_FragColor = texture2D(uSampler, vec2(R.x, R.y));
+			vec3 T = vTextureCoord.xyz * R;
+			gl_FragColor = texture2D(uSampler, vec2(T.x, T.y));
 			//gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.x, vTextureCoord.y));
 		}
 	</script>
