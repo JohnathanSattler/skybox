@@ -29,6 +29,45 @@
 		}
 	</script>
 
+	<script id="cubeShader-vs" type="x-shader/x-vertex">
+		attribute vec3 aVertexPosition;
+		attribute vec3 aVertexNormal;
+		attribute vec4 aTextureCoord;
+
+		uniform mat4 uMVMatrix;
+		uniform mat4 uPMatrix;
+		uniform mat3 uNMatrix;
+
+		varying vec4 vTextureCoord;
+		varying vec3 vNormal;
+		varying vec3 vPosition;
+
+		void main(void) {
+			vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+			gl_Position = uPMatrix * vPosition;
+			vTextureCoord = aTextureCoord;
+			vNormal = normalize(uNMatrix * aVertexNormal);
+		}
+	</script>
+
+	<script id="cubeShader-fs" type="x-shader/x-fragment">
+		precision mediump float;
+
+		varying vec4 vTextureCoord;
+		varying vec3 vNormal;
+		varying vec3 vPosition;
+
+		uniform sampler2D uSampler;
+
+		void main(void) {
+			vec3 N = vNormal;
+			vec3 V = -vPosition;
+			vec3 R = -reflect(V, N);
+			gl_FragColor = texture2D(uSampler, vec2(R.x, R.y));
+			//gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.x, vTextureCoord.y));
+		}
+	</script>
+
 	<script type="text/javascript" src="script.js"></script>
 
 </head>

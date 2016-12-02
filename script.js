@@ -54,41 +54,76 @@ function getShader(gl, id) {
 }
 
 var shaderProgram;
+var skyBoxShaderProgram;
+var cubeShaderProgram;
 
 function initShaders() {
 
-    var fragmentShader = getShader(gl, "shader-fs");
-    var vertexShader = getShader(gl, "shader-vs");
+    skyBoxShaderProgram = createProgram("shader-fs", "shader-vs");
+    cubeShaderProgram = createProgram("cubeShader-fs", "cubeShader-vs");
+}
 
-    shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
+function createProgram(fs, vs) {
 
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+    var fragmentShader = getShader(gl, fs);
+    var vertexShader = getShader(gl, vs);
+
+    var program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
         alert("Could not initialise shaders");
     }
 
-    gl.useProgram(shaderProgram);
+    gl.useProgram(program);
 
-    shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-    gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+    program.vertexPositionAttribute = gl.getAttribLocation(program, "aVertexPosition");
+    gl.enableVertexAttribArray(program.vertexPositionAttribute);
 
-    shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
-    gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+    program.textureCoordAttribute = gl.getAttribLocation(program, "aVertexNormal");
+    gl.enableVertexAttribArray(program.vertexNormalAttribute);
 
-    shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-    shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-    shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+    program.textureCoordAttribute = gl.getAttribLocation(program, "aTextureCoord");
+    gl.enableVertexAttribArray(program.textureCoordAttribute);
+
+    program.pMatrixUniform = gl.getUniformLocation(program, "uPMatrix");
+    program.mvMatrixUniform = gl.getUniformLocation(program, "uMVMatrix");
+    program.nMatrixUniform = gl.getUniformLocation(program, "uNMatrix");
+    program.samplerUniform = gl.getUniformLocation(program, "uSampler");
+
+    return program;
 }
 
 var mvMatrix = mat4.create();
+var mvMatrixStack = [];
 var pMatrix = mat4.create();
+
+function mvPushMatrix() {
+
+    var copy = mat4.create();
+    mat4.set(mvMatrix, copy);
+    mvMatrixStack.push(copy);
+}
+
+function mvPopMatrix() {
+
+    if (mvMatrixStack.length == 0) {
+        throw "Invalid popMatrix!";
+    }
+    mvMatrix = mvMatrixStack.pop();
+}
 
 function setMatrixUniforms() {
 
     gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+
+    var normalMatrix = mat3.create();
+    mat4.toInverseMat3(mvMatrix, normalMatrix);
+    mat3.transpose(normalMatrix);
+    gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
 }
 
 function degToRad(degrees) {
@@ -311,6 +346,49 @@ function initCube() {
     cubeVertexTextureCoordBuffer.itemSize = 2;
     cubeVertexTextureCoordBuffer.numItems = 24;
 
+    cubeVertexNormalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexNormalBuffer);
+    var vertexNormals = [
+        // Front face
+        0.0,  0.0,  1.0,
+        0.0,  0.0,  1.0,
+        0.0,  0.0,  1.0,
+        0.0,  0.0,  1.0,
+
+        // Back face
+        0.0,  0.0, -1.0,
+        0.0,  0.0, -1.0,
+        0.0,  0.0, -1.0,
+        0.0,  0.0, -1.0,
+
+        // Top face
+        0.0,  1.0,  0.0,
+        0.0,  1.0,  0.0,
+        0.0,  1.0,  0.0,
+        0.0,  1.0,  0.0,
+
+        // Bottom face
+        0.0, -1.0,  0.0,
+        0.0, -1.0,  0.0,
+        0.0, -1.0,  0.0,
+        0.0, -1.0,  0.0,
+
+        // Right face
+        1.0,  0.0,  0.0,
+        1.0,  0.0,  0.0,
+        1.0,  0.0,  0.0,
+        1.0,  0.0,  0.0,
+
+        // Left face
+        -1.0,  0.0,  0.0,
+        -1.0,  0.0,  0.0,
+        -1.0,  0.0,  0.0,
+        -1.0,  0.0,  0.0,
+    ];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals), gl.STATIC_DRAW);
+    cubeVertexNormalBuffer.itemSize = 3;
+    cubeVertexNormalBuffer.numItems = 24;
+
     cubeVertexIndexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
     var cubeVertexIndices = [
@@ -365,10 +443,6 @@ function drawScene() {
 
     mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
 
-    mat4.identity(mvMatrix);
-
-    mat4.translate(mvMatrix, [0, 0.0, -7.5]);
-
     // render skybox
     drawSkyBox();
 
@@ -377,6 +451,12 @@ function drawScene() {
 }
 
 function drawSkyBox() {
+
+    shaderProgram = skyBoxShaderProgram;
+    gl.useProgram(skyBoxShaderProgram);
+
+    mat4.identity(mvMatrix);
+    mat4.translate(mvMatrix, [0, 0.0, -7.5]);
 
     mat4.rotate(mvMatrix, degToRad(xRot), [1, 0, 0]);
     mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
@@ -399,15 +479,21 @@ function drawSkyBox() {
 
 function drawSmallCube() {
 
+    shaderProgram = cubeShaderProgram;
+    gl.useProgram(cubeShaderProgram);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(cubeShaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexNormalBuffer);
+    gl.vertexAttribPointer(cubeShaderProgram.vertexNormalAttribute, cubeVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
-    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, cubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(cubeShaderProgram.textureCoordAttribute, cubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, textureImage);
-    gl.uniform1i(shaderProgram.samplerUniform, 0);
+    gl.uniform1i(cubeShaderProgram.samplerUniform, 0);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
     setMatrixUniforms();
