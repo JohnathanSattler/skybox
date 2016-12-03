@@ -61,11 +61,11 @@
 		uniform sampler2D uSampler;
 
 		void main(void) {
-			vec3 N = normalize(vNormal);
-			vec3 V = normalize(-vPosition);
-			vec3 R = -reflect(V, N);
+			vec3 N = vNormal;
+			vec3 V = -vPosition;
+			vec3 R = 0.1 * reflect(V, N) * N - V;
 			vec3 T = vTextureCoord.xyz * R;
-			gl_FragColor = texture2D(uSampler, vec2(T.x, T.y));
+			gl_FragColor = texture2D(uSampler, vec2(R.x, R.y));
 		}
 	</script>
 
