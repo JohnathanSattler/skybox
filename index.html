@@ -44,10 +44,10 @@
 
 		void main(void) {
 			vec4 position = uMVMatrix * vec4(aVertexPosition, 1.0);
-			gl_Position = uPMatrix * vPosition;
+			gl_Position = uPMatrix * position;
 			vPosition = position.xyz;
 			vTextureCoord = aTextureCoord;
-			vNormal = normalize(uNMatrix * aVertexNormal);
+			vNormal = aVertexNormal * uNMatrix;
 		}
 	</script>
 
@@ -61,12 +61,11 @@
 		uniform sampler2D uSampler;
 
 		void main(void) {
-			vec3 N = vNormal;
+			vec3 N = normalize(vNormal);
 			vec3 V = normalize(-vPosition);
 			vec3 R = -reflect(V, N);
 			vec3 T = vTextureCoord.xyz * R;
 			gl_FragColor = texture2D(uSampler, vec2(T.x, T.y));
-			//gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.x, vTextureCoord.y));
 		}
 	</script>
 
