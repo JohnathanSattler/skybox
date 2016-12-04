@@ -1,72 +1,71 @@
 <head>
-	<script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
-	<script type="text/javascript" src="webgl-utils.js"></script>
+    <title>Skybox</title>
+
+	<script type="text/javascript" src="gl-matrix-min.js"></script>
 
 	<script id="shader-vs" type="x-shader/x-vertex">
-		attribute vec3 aVertexPosition;
-		attribute vec4 aTextureCoord;
+        attribute vec3 aPosition;
 
-		uniform mat4 uMVMatrix;
-		uniform mat4 uPMatrix;
+        uniform mat4 uPMatrix;
+        uniform mat4 uMVMatrix;
 
-		varying vec4 vTextureCoord;
+        varying vec3 vPosition;
 
-		void main(void) {
-			gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-			vTextureCoord = aTextureCoord;
-		}
+        void main() {
+            vec4 eyeCoords = uMVMatrix * vec4(aPosition,1.0);
+            gl_Position = uPMatrix * eyeCoords;
+            vPosition = aPosition;
+        }
 	</script>
 
 	<script id="shader-fs" type="x-shader/x-fragment">
-		precision mediump float;
+        precision mediump float;
 
-		varying vec4 vTextureCoord;
+        varying vec3 vPosition;
 
-		uniform sampler2D uSampler;
+        uniform samplerCube skybox;
 
-		void main(void) {
-			gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.x, vTextureCoord.y));
-		}
+        void main() {
+            gl_FragColor = textureCube(skybox, vPosition);
+        }
 	</script>
 
 	<script id="cubeShader-vs" type="x-shader/x-vertex">
-		attribute vec3 aVertexPosition;
-		attribute vec3 aVertexNormal;
-		attribute vec4 aTextureCoord;
+        attribute vec3 aPosition;
+        attribute vec3 aNormal;
 
-		uniform mat4 uMVMatrix;
-		uniform mat4 uPMatrix;
-		uniform mat3 uNMatrix;
+        uniform mat4 uPMatrix;
+        uniform mat4 uMVMatrix;
 
-		varying vec4 vTextureCoord;
-		varying vec3 vNormal;
-		varying vec3 vPosition;
+        varying vec3 vPosition;
+        varying vec3 vNormal;
 
-		void main(void) {
-			vec4 position = uMVMatrix * vec4(aVertexPosition, 1.0);
-			gl_Position = uPMatrix * position;
-			vPosition = position.xyz;
-			vTextureCoord = aTextureCoord;
-			vNormal = aVertexNormal * uNMatrix;
-		}
+        void main() {
+            vec4 eyeCoords = uMVMatrix * vec4(aPosition,1.0);
+            gl_Position = uPMatrix * eyeCoords;
+            vPosition = eyeCoords.xyz;
+            vNormal = aNormal;
+        }
 	</script>
 
 	<script id="cubeShader-fs" type="x-shader/x-fragment">
-		precision mediump float;
+        precision mediump float;
 
-		varying vec4 vTextureCoord;
-		varying vec3 vNormal;
-		varying vec3 vPosition;
+        varying vec3 vCoords;
+        varying vec3 vNormal;
+        varying vec3 vPosition;
 
-		uniform sampler2D uSampler;
+        uniform samplerCube skybox;
+        uniform mat3 uNMatrix;
+        uniform mat3 invVT;
 
-		void main(void) {
-			vec3 N = vNormal;
-			vec3 V = -vPosition;
-			vec3 R = 0.1 * reflect(V, N) * N - V;
-			vec3 T = vTextureCoord.xyz * R;
-			gl_FragColor = texture2D(uSampler, vec2(R.x, R.y));
-		}
+        void main() {
+            vec3 N = uNMatrix * vNormal;
+            vec3 V = -vPosition;
+            vec3 R = 2.0 * dot(V,N) * N - V;
+            vec3 T = invVT * R;
+            gl_FragColor = textureCube(skybox, T);
+        }
 	</script>
 
 	<script type="text/javascript" src="script.js"></script>
@@ -74,5 +73,4 @@
 </head>
 <body onLoad='webGLStart();' style="padding: 0; margin: 0; overflow: hidden;">
 	<canvas id="myCanvas" style="border: none;" width="500" height="500"></canvas>
- 
 </body>
