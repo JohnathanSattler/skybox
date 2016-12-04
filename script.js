@@ -252,7 +252,7 @@ function cube(size) {
         0.0, 0.0,
         1.0, 0.0,
         1.0, 1.0,
-        0.0, 1.0, 
+        0.0, 1.0,
 
         // Right face
         0.0, 0.0,
@@ -289,9 +289,9 @@ function initTextures(urls) {
     var ct = 0;
     var img = new Array(6);
     var urls = [
-       "cubemap/px.png", "cubemap/nx.png", 
-       "cubemap/py.png", "cubemap/ny.png", 
-       "cubemap/pz.png", "cubemap/nz.png"
+       "cubemap/front.jpg", "cubemap/back.jpg", // x
+       "cubemap/top.jpg", "cubemap/bottom.jpg", // z
+       "cubemap/right.jpg", "cubemap/left.jpg"  // y
     ];
     for (var i = 0; i < 6; i++) {
         img[i] = new Image();
