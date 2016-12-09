@@ -12,8 +12,8 @@
         varying vec3 vPosition;
 
         void main() {
-            vec4 eyeCoords = uMVMatrix * vec4(aPosition,1.0);
-            gl_Position = uPMatrix * eyeCoords;
+            vec4 position = uMVMatrix * vec4(aPosition, 1.0);
+            gl_Position = uPMatrix * position;
             vPosition = aPosition;
         }
 	</script>
@@ -41,9 +41,9 @@
         varying vec3 vNormal;
 
         void main() {
-            vec4 eyeCoords = uMVMatrix * vec4(aPosition,1.0);
-            gl_Position = uPMatrix * eyeCoords;
-            vPosition = eyeCoords.xyz;
+            vec4 position = uMVMatrix * vec4(aPosition, 1.0);
+            gl_Position = uPMatrix * position;
+            vPosition = position.xyz;
             vNormal = aNormal;
         }
 	</script>
@@ -62,7 +62,7 @@
         void main() {
             vec3 N = uNMatrix * vNormal;
             vec3 V = -vPosition;
-            vec3 R = 2.0 * dot(V,N) * N - V;
+            vec3 R = 2.0 * dot(V, N) * N - V;
             vec3 T = invVT * R;
             gl_FragColor = textureCube(skybox, T);
         }

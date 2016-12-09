@@ -28,6 +28,7 @@ function initGL(canvas) {
     }
 }
 
+// initialize the shaders
 function initShaders() {
 
     // skybox shader
@@ -104,12 +105,14 @@ function getShader(gl, id) {
     return shader;
 }
 
+// create the buffers for the objects
 function initBuffers() {
 
     initSkybox(1000);
     initCube(20);
 }
 
+// create the skybox
 function initSkybox(size) {
 
     var modelData = cube(size);
@@ -127,6 +130,7 @@ function initSkybox(size) {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, modelData.indices, gl.STATIC_DRAW);
 }
 
+// create the cube
 function initCube(size) {
 
     var modelData = cube(size);
@@ -148,6 +152,7 @@ function initCube(size) {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, modelData.indices, gl.STATIC_DRAW);
 }
 
+// create the buffers for a cube
 function cube(size) {
 
     var vertices = [
@@ -284,6 +289,7 @@ function cube(size) {
     }
 }
 
+// load the textures
 function initTextures(urls) {
 
     var ct = 0;
@@ -402,8 +408,8 @@ function degToRad(degrees) {
     return degrees * Math.PI  / 180;
 }
 
+// rotate the cube
 var lastTime = 0;
-
 function animate() {
 
     var timeNow = new Date().getTime();
@@ -411,9 +417,9 @@ function animate() {
     if (lastTime != 0) {
         var elapsed = timeNow - lastTime;
 
-        //xRot += (90 * elapsed) / 1000.0;
+        //xRot += (90 * elapsed) / 1000.0 / 10.0;
         yRot += (90 * elapsed) / 1000.0 / 10.0;
-        //zRot += (90 * elapsed) / 1000.0;
+        //zRot += (90 * elapsed) / 1000.0 / 10.0;
     }
 
     lastTime = timeNow;
